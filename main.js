@@ -2,40 +2,29 @@ const express = require("express");
 const fs = require("fs");
 const app = express();
 const PORT = 8080;
-
 const server = app.listen(PORT, () => {
   console.log(`Servidor http escuchando en el puerto ${server.address().port}`);
 });
 server.on("error", (error) => console.log(`Error en servidor ${error}`));
 
-class Contenedor {
-  constructor(archivo) {
-    this.archivo = archivo;
-  }
-  async getAll() {
-    try {
-      const file = await fs.promises.readFile("./productos.txt", "utf-8");
-      const data = JSON.parse(file);
-      return data;
-    } catch (error) {
-      console.log("error!: ", error);
-    }
-  }
+const Contenedor = require("./classes/classes.js");
+const catalogo = new Contenedor("./productos.txt");
 
-  async productoRandom() {
-    const random = parseInt(Math.random() * 3) + 1;
-    try {
-      const file = await fs.promises.readFile(this.archivo, "utf-8");
-      const data = JSON.parse(file);
-      const index = data.findIndex((producto) => producto.id == random);
-      return data[index] || null;
-    } catch (error) {
-      console.log("error!: ", error);
-    }
+randomIndex = (maxNumber) => {
+  const random = parseInt(Math.random() * maxNumber) + 1;
+  return random;
+};
+
+async function getRandomItem(source) {
+  try {
+    const file = await fs.promises.readFile(source.archivo, "utf-8");
+    const data = JSON.parse(file);
+    const cantidadItems = data.length;
+    return source.getById(randomIndex(cantidadItems));
+  } catch (error) {
+    console.log("error!: ", error);
   }
 }
-
-const catalogo = new Contenedor("./productos.txt");
 
 app.get("/productos", async (req, res) => {
   const resultado = await catalogo.getAll();
@@ -43,7 +32,7 @@ app.get("/productos", async (req, res) => {
 });
 
 app.get("/productoRandom", async (req, res) => {
-  const resultado = await catalogo.productoRandom();
+  const resultado = await getRandomItem(catalogo);
   return res.send(resultado);
 });
 
